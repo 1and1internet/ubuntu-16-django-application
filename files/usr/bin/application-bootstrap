@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+echo "Application Bootstrap"
+#
+# This is intended to be used as part of the build process
+#
+
+cd /var/www
+if [ -e "passenger_wsgi.py" ] || [ -e "manage.py" ]; then 
+	echo "ERROR: Django application already present in /var/www"
+	exit 1
+fi
+
+source /python3-virtualenv/bin/activate
+pip install --no-cache-dir django==1.9.4 django-celery==3.1.17
+django-admin startproject -v 3 app .
+cp -v app/wsgi.py passenger_wsgi.py
+
+echo "" > app/settings.py.new
+echo "import djcelery, os" >> app/settings.py.new
+echo "djcelery.setup_loader()" >> app/settings.py.new
+echo "BROKER_URL = os.environ.get('CELERY_BROKER_URL')" >> app/settings.py.new
+echo "CELERY_ACCEPT_CONTENT = ['json', 'yaml']" >> app/settings.py.new
+echo "CELERY_TASK_SERIALIZER = 'json'" >> app/settings.py.new
+echo "" >> app/settings.py.new
+cat app/settings.py >> app/settings.py.new
+echo "INSTALLED_APPS += ('djcelery', )" >> app/settings.py.new
+cat app/settings.py.new > app/settings.py
+
+python manage.py check

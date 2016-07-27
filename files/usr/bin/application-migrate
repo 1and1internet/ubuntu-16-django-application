@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+echo "Application Migrate"
+cd /var/www
+if [ ! -e "manage.py" ]; then 
+	echo "ERROR: Django application not present in /var/www"
+	exit 1
+fi
+
+source /python3-virtualenv/bin/activate
+python /var/www/manage.py showmigrations
+exec python /var/www/manage.py migrate
