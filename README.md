@@ -13,9 +13,9 @@ A Docker image to use as a basis for Docker contained Django applications with C
 
 ### Using OpenShift
 
-'''
+```
 oc new-app --file=openshift-template.yaml --param=APP_HOSTNAME_SUFFIX=.djangoapp.example.com
-'''
+```
 
 ### Using Docker
 
