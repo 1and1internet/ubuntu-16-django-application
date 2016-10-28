@@ -11,6 +11,9 @@ if [ -e "passenger_wsgi.py" ] || [ -e "manage.py" ]; then
 	exit 1
 fi
 
+ln -s /python3-virtualenv/bin/activate /usr/bin/application-python-environment
+ln -s /python3-virtualenv/bin/activate /usr/bin/application-python3-environment
+
 source /python3-virtualenv/bin/activate
 pip install --no-cache-dir django==1.9.4 django-celery==3.1.17
 django-admin startproject -v 3 app .
