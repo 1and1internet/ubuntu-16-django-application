@@ -35,8 +35,8 @@ objects:
             - 
               name: "${APP_NAME}-worker"
               imagePullPolicy: Always
-              image: "astrolox/ubuntu-16-passenger-python-3.5:unstable"
-              command: ["application-worker"]
+              image: "astrolox/ubuntu-16-django-application:latest"
+              args: ["application-worker"]
               env: ~
           restartPolicy: Always
           securityContext: 
@@ -52,7 +52,7 @@ objects:
               - "${APP_NAME}-worker"
             from: 
               kind: ImageStreamTag
-              name: "ubuntu-16-passenger-python-3.5:unstable"
+              name: "ubuntu-16-django-application:latest"
 # Scheduler (CRON)
   - 
     apiVersion: v1
@@ -82,8 +82,8 @@ objects:
             - 
               name: "${APP_NAME}-cron"
               imagePullPolicy: Always
-              image: "astrolox/ubuntu-16-passenger-python-3.5:unstable"
-              command: ["application-cron"]
+              image: "astrolox/ubuntu-16-django-application:latest"
+              args: ["application-cron"]
               env: ~
           restartPolicy: Always
           securityContext: 
@@ -99,7 +99,7 @@ objects:
               - "${APP_NAME}-cron"
             from: 
               kind: ImageStreamTag
-              name: "ubuntu-16-passenger-python-3.5:unstable"
+              name: "ubuntu-16-django-application:latest"
 # Web (WEB)
   - 
     apiVersion: v1
@@ -129,8 +129,8 @@ objects:
             - 
               name: "${APP_NAME}-web"
               imagePullPolicy: Always
-              image: "astrolox/ubuntu-16-passenger-python-3.5:unstable"
-              command: ["application-web"]
+              image: "astrolox/ubuntu-16-django-application:latest"
+              args: ["application-web"]
               ports: 
                 - 
                   name: "http"
@@ -140,18 +140,6 @@ objects:
                   name: "https"
                   containerPort: 8443
                   protocol: TCP
-              livenessProbe: 
-                httpGet: 
-                  path: /
-                  port: "https"
-                  scheme: HTTPS
-                initialDelaySeconds: 5
-              readinessProbe: 
-                httpGet: 
-                  path: /
-                  port: "https"
-                  scheme: HTTPS
-                initialDelaySeconds: 5
               env: ~
           restartPolicy: Always
           securityContext: 
@@ -167,7 +155,7 @@ objects:
               - "${APP_NAME}-web"
             from: 
               kind: ImageStreamTag
-              name: "ubuntu-16-passenger-python-3.5:unstable"
+              name: "ubuntu-16-django-application:latest"
   - 
     apiVersion: v1
     kind: Service
@@ -223,25 +211,25 @@ objects:
         name: "${APP_NAME}-mg"
       name: "${APP_NAME}-mg"
     spec: 
-      replicas: 2
+      replicas: 1
       selector: 
         name: "${APP_NAME}-mg"
       strategy: 
-        type: Rolling
+        type: Recreate
       template: 
         metadata: 
           labels: 
             template: django-application
             component: "migrator"
             app: "${APP_NAME}"
-            name: "${APP_NAME}-web"
+            name: "${APP_NAME}-mg"
         spec: 
           containers: 
             - 
               name: "${APP_NAME}-mg"
               imagePullPolicy: Always
-              image: "astrolox/ubuntu-16-passenger-python-3.5:unstable"
-              command: ["application-migrate"]
+              image: "astrolox/ubuntu-16-django-application:latest"
+              args: ["application-migrate"]
               env: ~
           restartPolicy: Always
           securityContext: 
@@ -257,13 +245,24 @@ objects:
               - "${APP_NAME}-mg"
             from: 
               kind: ImageStreamTag
-              name: "ubuntu-16-passenger-python-3.5:unstable"
+              name: "ubuntu-16-django-application:latest"
 # Database (DB)
   - 
     kind: PersistentVolumeClaim
     apiVersion: v1
     metadata:
       name: "${APP_NAME}-db"
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+  - 
+    kind: PersistentVolumeClaim
+    apiVersion: v1
+    metadata:
+      name: "${APP_NAME}-db-tmp"
     spec:
       accessModes:
         - ReadWriteOnce
@@ -332,7 +331,7 @@ objects:
                   name: "${APP_NAME}-db"
                 - 
                   mountPath: /tmp
-                  name: "${APP_NAME}-tmp"
+                  name: "${APP_NAME}-db-tmp"
           volumes:
             -
               name: "${APP_NAME}-db"
@@ -513,8 +512,10 @@ objects:
       to: 
         kind: Service
         name: "${APP_NAME}-mq"
+      tls:
+        termination: passthrough
       port:
-        targetPort: "http"
+        targetPort: "https"
 # Message Queue (MQ) - Celery Flower
   - 
     apiVersion: v1
