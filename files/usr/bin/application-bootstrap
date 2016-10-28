@@ -28,3 +28,5 @@ echo "INSTALLED_APPS += ('djcelery', )" >> app/settings.py.new
 cat app/settings.py.new > app/settings.py
 
 python manage.py check
+
+rm /usr/bin/application-bootstrap
