@@ -7,8 +7,13 @@ echo "Application All In One"
 # $ docker run ubuntu-16-django-application
 #
 
+# Stop on error
+set -e
+
 # enable everything
 application-component-enable all
+
+ls -lR /etc/supervisor/conf*
 
 # do the database migration (which will then start everything else)
 exec /usr/bin/application-migrate

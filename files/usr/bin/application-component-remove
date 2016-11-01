@@ -1,17 +1,20 @@
 #!/usr/bin/env bash
 
+# Stop on error
+set -e
+
 COMPONENT=$1
 
-if [ -z "$COMPONENT" ]; then
+if [[ -z "$COMPONENT" ]]; then
     echo "ERROR: No component name passed to application-component-remove"
     exit 1
 fi
 
-if [ "$COMPONENT" = "all" ]; then
+if [[ "$COMPONENT" = "all" ]]; then
     echo "Refusing to remove all components"
     exit 2
 
-elif [ "$COMPONENT" = "web" ]; then
+elif [[ "$COMPONENT" = "web" ]]; then
     echo "Removing application web component"
     rm -f /etc/supervisor/conf.d.template/logs.conf
     rm -f /etc/supervisor/conf.d.template/nginx.conf

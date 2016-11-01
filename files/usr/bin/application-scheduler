@@ -6,6 +6,9 @@ echo "Application Scheduler"
 # $ docker run ubuntu-16-django-application application-scheduler
 #
 
+# Stop on error
+set -e
+
 cd /var/www
 if [ ! -e "manage.py" ]; then 
     echo "ERROR: Django application not present in /var/www"
@@ -13,12 +16,8 @@ if [ ! -e "manage.py" ]; then
 fi
 
 if [ -z "$1" ]; then
-    # No command line arguments
-
-    rm /etc/supervisor/conf.d/nginx.conf
-    rm /etc/supervisor/conf.d/logs.conf
-    rm /etc/supervisor/conf.d/worker.conf
-
+    # No command line arguments ... assume being called as docker run argument
+    application-component-enable scheduler
     exec /init/supervisord
 else
     # Execute our scheduler
