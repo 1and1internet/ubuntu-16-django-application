@@ -24,8 +24,9 @@ chmod -R 755 /hooks/supervisord-pre.d/* /usr/bin/application*
 
 # From now on only source application-python-environment 
 # This allows the path of the virtual environment to change without badly breaking things
-ln -s /python3-virtualenv/bin/activate /usr/bin/application-python-environment
-ln -s /python3-virtualenv/bin/activate /usr/bin/application-python3-environment
+VIRTENV="${VIRTENV:/var/www/._venv}"
+ln -s ${VIRTENV}/bin/activate /usr/bin/application-python-environment
+ln -s ${VIRTENV}/bin/activate /usr/bin/application-python3-environment
 
 source application-python-environment
 

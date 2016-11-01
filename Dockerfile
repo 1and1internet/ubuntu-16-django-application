@@ -1,4 +1,4 @@
-FROM astrolox/ubuntu-16-passenger-python-3.5:latest
+FROM 1and1internet/ubuntu-16-nginx-passenger-python-3:latest
 MAINTAINER brian.wojtczak@1and1.co.uk
 ENV \
 	PASSENGER_APP_ENV=production \
