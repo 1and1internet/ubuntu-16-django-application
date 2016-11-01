@@ -11,8 +11,8 @@ set -e
 
 cd /var/www
 if [ ! -e "manage.py" ]; then 
-	echo "ERROR: Django application not present in /var/www"
-	exit 1
+    echo "ERROR: Django application not present in /var/www"
+    exit 1
 fi
 
 source application-python-environment
