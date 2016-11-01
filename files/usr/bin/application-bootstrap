@@ -9,7 +9,7 @@ echo "Application Bootstrap"
 set -e
 
 cd /var/www
-if [ -e "passenger_wsgi.py" ] || [ -e "manage.py" ]; then 
+if [[ -e "passenger_wsgi.py" ]] || [[ -e "manage.py" ]]; then 
     echo "ERROR: Django application already present in /var/www"
     exit 1
 fi
@@ -22,38 +22,38 @@ chmod -R 777 /etc/supervisor/conf*
 # Make life a little easier by accounting for commonly occurring problems / mistakes
 chmod -R 755 /hooks/supervisord-pre.d/* /usr/bin/application*
 
+# Remove demonstration files from upstream image
+rm -r /hooks/supervisord-pre.d/40_py_passenger_setup /usr/src
+
+#
+# The upstream image installs python virtual environment at run time, not build time.
+#  It is expecting persistent storage to be mounted at /var/www
+#
+# This primary use case for this image however is to run without persistent storage and
+#  to have the Django application baked in to it, by way of a docker image descending 
+#  from this one.
+#
+# However this image allows for either use case via the $BAKED build argument.
+#
+if [[ "$BAKED" == "True" ]]; then
+    # NOTE: This results in the files being owned by root (i.e. no changes at run time)
+
+    source /hooks/entrypoint-pre.d/91_python3_setup
+    source /hooks/entrypoint-pre.d/93_django_setup
+    source /hooks/entrypoint-pre.d/95_pip_requirements
+
+    # This hook script is primarily for the non-baked use case,
+    #  remove it so that our baked in versions don't try to change at run time.
+    rm  /hooks/entrypoint-pre.d/95_pip_requirements
+else
+    echo "NOT baking a python 3 virtual environment and Django installation in to this image."
+    echo "These will be installed at run time, if their presence is not detected."
+fi
+
 # From now on only source application-python-environment 
 # This allows the path of the virtual environment to change without badly breaking things
-VIRTENV="${VIRTENV:/var/www/._venv}"
 ln -s ${VIRTENV}/bin/activate /usr/bin/application-python-environment
 ln -s ${VIRTENV}/bin/activate /usr/bin/application-python3-environment
-
-source application-python-environment
-
-# Install some Django basics to ensure this image functions standalone in a fashion that makes sense.
-pip install --no-cache-dir --upgrade pip
-pip install --no-cache-dir --upgrade django-celery==3.1.17 django==1.9.4
-django-admin startproject -v 3 app .
-cp -v app/wsgi.py passenger_wsgi.py
-echo "" > app/settings.py.new
-echo "import djcelery, os" >> app/settings.py.new
-echo "" >> app/settings.py.new
-echo "BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))" >> app/settings.py.new
-echo "SECRET_KEY = os.environ.get('SECRET_KEY', 'insecure')" >> app/settings.py.new
-echo "DEBUG = (os.environ.get('WSGI_ENV', 'production') == 'development')" >> app/settings.py.new
-echo "ALLOWED_HOSTS = ['*']" >> app/settings.py.new
-echo "" >> app/settings.py.new
-echo "djcelery.setup_loader()" >> app/settings.py.new
-echo "BROKER_URL = os.environ.get('CELERY_BROKER_URL')" >> app/settings.py.new
-echo "CELERY_ACCEPT_CONTENT = ['json', 'yaml']" >> app/settings.py.new
-echo "CELERY_TASK_SERIALIZER = 'json'" >> app/settings.py.new
-echo "" >> app/settings.py.new
-cat app/settings.py >> app/settings.py.new
-echo "INSTALLED_APPS += ('djcelery', )" >> app/settings.py.new
-cat app/settings.py.new > app/settings.py
-
-# Ensure the build fails if Django has any problems in this environment
-python manage.py check
 
 # Remove this script, as it's no longer needed
 rm /usr/bin/application-bootstrap

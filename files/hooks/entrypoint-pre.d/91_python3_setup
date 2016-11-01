@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+set -e
+
+VIRTENV="${VIRTENV:-/var/www/._venv}"
+PATH=$VIRTENV/bin:$PATH
+
+if [ ! -d "${VIRTENV}" ]; then
+    echo "Python virtual environment not found at ${VIRTENV}, attempting to get lock"
+    (
+        if flock -n 9; then
+            echo 'Got lock - installing python virtual environment'
+
+            /usr/bin/pyvenv ${VIRTENV}
+            ln -s ${VIRTENV}/bin/activate ${VIRTENV}/bin/application-python-environment
+            ln -s ${VIRTENV}/bin/activate ${VIRTENV}/bin/application-python3-environment
+
+            source application-python-environment
+            python --version
+            pip --version
+            pip install --no-cache-dir --upgrade pip
+
+        else
+            echo 'No lock, exiting with error'
+            exit 1
+        fi
+    ) 9>/var/www/alockfile
+    
+    rm -f /var/www/alockfile
+fi

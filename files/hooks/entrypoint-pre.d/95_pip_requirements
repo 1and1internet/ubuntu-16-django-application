@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+set -e
+
+if [[ -f "/var/www/requirements.txt" ]]; then
+    echo "The /var/www/requirements.txt was found, installing python packages"
+    (
+        if flock -n 9; then
+            echo 'Got lock - installing'
+            source application-python-environment
+            pip install --no-cache-dir --upgrade -r /var/www/requirements.txt
+
+        else
+            echo 'No lock, exiting'
+            exit
+        fi
+    ) 9>/var/www/alockfile
+    
+    rm -f /var/www/alockfile
+fi

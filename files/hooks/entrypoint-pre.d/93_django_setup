@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+set -e
+
+DJANGO_VER="${DJANGO_VER:-1.9.11}"
+DJANGO_CELERY_VER="${DJANGO_CELERY_VER:-3.1.17}"
+
+if [[ ! -f "/var/www/passenger_wsgi.py" ]]; then
+    echo "The /var/www/passenger_wsgi.py not found, installing Django ${DJANGO_VER}"
+    (
+        if flock -n 9; then
+            echo 'Got lock - installing'
+            mkdir /var/www/public
+
+            source application-python-environment
+
+            pip install --no-cache-dir --upgrade mysqlclient
+            pip install --no-cache-dir --upgrade django-celery==${DJANGO_CELERY_VER}
+            pip install --no-cache-dir --upgrade django==${DJANGO_VER}
+
+            django-admin startproject -v 3 app .
+            cp -v app/wsgi.py passenger_wsgi.py
+
+            # This is an old way of install django-celery
+            # TODO FIXME update to the newer way of using Celery with Django
+            echo "" > app/settings.py.new
+            echo "import djcelery, os" >> app/settings.py.new
+            echo "" >> app/settings.py.new
+            echo "BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))" >> app/settings.py.new
+            echo "SECRET_KEY = os.environ.get('SECRET_KEY', 'insecure')" >> app/settings.py.new
+            echo "DEBUG = (os.environ.get('WSGI_ENV', 'production') == 'development')" >> app/settings.py.new
+            echo "ALLOWED_HOSTS = ['*']" >> app/settings.py.new
+            echo "" >> app/settings.py.new
+            echo "djcelery.setup_loader()" >> app/settings.py.new
+            echo "BROKER_URL = os.environ.get('CELERY_BROKER_URL')" >> app/settings.py.new
+            echo "CELERY_ACCEPT_CONTENT = ['json', 'yaml']" >> app/settings.py.new
+            echo "CELERY_TASK_SERIALIZER = 'json'" >> app/settings.py.new
+            echo "" >> app/settings.py.new
+            cat app/settings.py >> app/settings.py.new
+            echo "INSTALLED_APPS += ('djcelery', )" >> app/settings.py.new
+            cat app/settings.py.new > app/settings.py
+
+            # Ensure failure message appears if Django has any problems in this environment
+            python manage.py check
+
+        else
+            echo 'No lock, exiting'
+            exit
+        fi
+    ) 9>/var/www/alockfile
+    
+    rm -f /var/www/alockfile
+fi
