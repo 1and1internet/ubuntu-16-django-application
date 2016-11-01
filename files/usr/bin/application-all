@@ -13,7 +13,5 @@ set -e
 # enable everything
 application-component-enable all
 
-ls -lR /etc/supervisor/conf*
-
 # do the database migration (which will then start everything else)
 exec /usr/bin/application-migrate
