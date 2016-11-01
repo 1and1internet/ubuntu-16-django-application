@@ -1,26 +1,2 @@
 #!/usr/bin/env bash
-echo "Application Migrate"
-cd /var/www
-if [ ! -e "manage.py" ]; then 
-	echo "ERROR: Django application not present in /var/www"
-	exit 1
-fi
-
-source /python3-virtualenv/bin/activate
-echo ""
-echo ""
-
-python /var/www/manage.py showmigrations
-echo ""
-echo ""
-
-python /var/www/manage.py migrate
-echo ""
-echo ""
-
-python /var/www/manage.py showmigrations
-echo ""
-echo ""
-
-rm /etc/supervisor/conf.d/*.conf
-exec /init/supervisord
+exec /usr/bin/application-migrator

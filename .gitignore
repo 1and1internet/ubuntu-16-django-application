@@ -5,3 +5,4 @@ rebuild.sh
 redeploy.sh
 rebuild.bat
 redeploy.bat
+ocdeploy.sh

@@ -11,16 +11,34 @@ if [ -e "passenger_wsgi.py" ] || [ -e "manage.py" ]; then
 	exit 1
 fi
 
+# Move the supervisor files to accommodate the enable / disable / remove scripts
+mv /etc/supervisor/conf.d /etc/supervisor/conf.d.template
+mkdir -p /etc/supervisor/conf.d
+chmod -R 777 /etc/supervisor/conf*
+
+# Make life a little easier by accounting for commonly occurring problems / mistakes
+chmod -R 755 /hooks/supervisord-pre.d/* /usr/bin/application*
+
+# From now on only source application-python-environment 
+# This allows the path of the virtual environment to change without badly breaking things
 ln -s /python3-virtualenv/bin/activate /usr/bin/application-python-environment
 ln -s /python3-virtualenv/bin/activate /usr/bin/application-python3-environment
 
-source /python3-virtualenv/bin/activate
-pip install --no-cache-dir django==1.9.4 django-celery==3.1.17
+source application-python-environment
+
+# Install some Django basics to ensure this image functions standalone in a fashion that makes sense.
+pip install --no-cache-dir --upgrade pip
+pip install --no-cache-dir --upgrade django-celery django
 django-admin startproject -v 3 app .
 cp -v app/wsgi.py passenger_wsgi.py
-
 echo "" > app/settings.py.new
 echo "import djcelery, os" >> app/settings.py.new
+echo "" >> app/settings.py.new
+echo "BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))" >> app/settings.py.new
+echo "SECRET_KEY = os.environ.get('SECRET_KEY', 'insecure')" >> app/settings.py.new
+echo "DEBUG = (os.environ.get('WSGI_ENV', 'production') == 'development')" >> app/settings.py.new
+echo "ALLOWED_HOSTS = ['*']" >> app/settings.py.new
+echo "" >> app/settings.py.new
 echo "djcelery.setup_loader()" >> app/settings.py.new
 echo "BROKER_URL = os.environ.get('CELERY_BROKER_URL')" >> app/settings.py.new
 echo "CELERY_ACCEPT_CONTENT = ['json', 'yaml']" >> app/settings.py.new
@@ -30,6 +48,8 @@ cat app/settings.py >> app/settings.py.new
 echo "INSTALLED_APPS += ('djcelery', )" >> app/settings.py.new
 cat app/settings.py.new > app/settings.py
 
+# Ensure the build fails if Django has any problems in this environment
 python manage.py check
 
+# Remove this script, as it's no longer needed
 rm /usr/bin/application-bootstrap

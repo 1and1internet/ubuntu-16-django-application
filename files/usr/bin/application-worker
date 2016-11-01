@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
+
 echo "Application Worker"
+#
+# To run just the application worker in its own container use
+# $ docker run ubuntu-16-django-application application-worker
+#
+
 cd /var/www
 if [ ! -e "manage.py" ]; then 
     echo "ERROR: Django application not present in /var/www"
@@ -16,6 +22,7 @@ if [ -z "$1" ]; then
     exec /init/supervisord
 else
     # Execute our scheduler
-    source /python3-virtualenv/bin/activate
+    # NB. This follows the slightly older way of doing this and requires the django-celery package
+    source application-python-environment
     exec python /var/www/manage.py celeryd -l info
 fi

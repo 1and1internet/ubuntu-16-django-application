@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
+
 echo "Application Web Interface"
+#
+# To run just the application web interface in its own container use
+# $ docker run ubuntu-16-django-application application-web
+#
+
 cd /var/www
 if [ ! -e "manage.py" ]; then 
     echo "ERROR: Django application not present in /var/www"

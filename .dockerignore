@@ -1,1 +1,9 @@
 env
+local.env
+*.swp
+rebuild.sh
+redeploy.sh
+rebuild.bat
+redeploy.bat
+ocdeploy.sh
+.git
