@@ -4,6 +4,7 @@ set -e
 
 DJANGO_VER="${DJANGO_VER:-1.9.11}"
 DJANGO_CELERY_VER="${DJANGO_CELERY_VER:-3.1.17}"
+CELERY_VER="${DJANGO_CELERY_VER:-3.1.24}"
 
 if [[ ! -f "/var/www/passenger_wsgi.py" ]]; then
     echo "The /var/www/passenger_wsgi.py not found, installing Django ${DJANGO_VER}"
@@ -15,8 +16,7 @@ if [[ ! -f "/var/www/passenger_wsgi.py" ]]; then
             source application-python-environment
 
             pip install --no-cache-dir --upgrade mysqlclient
-            pip install --no-cache-dir --upgrade django-celery==${DJANGO_CELERY_VER}
-            pip install --no-cache-dir --upgrade django==${DJANGO_VER}
+            pip install --no-cache-dir --upgrade celery==${CELERY_VER} django-celery==${DJANGO_CELERY_VER} django==${DJANGO_VER}
 
             django-admin startproject -v 3 app .
             cp -v app/wsgi.py passenger_wsgi.py

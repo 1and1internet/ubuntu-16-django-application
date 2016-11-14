@@ -132,6 +132,7 @@ Before putting your Django application near a production server please review [t
   * ``BAKED`` - defaults to ``True``, any other value means ``False``
   * ``DJANGO_VER`` - defaults to ``1.9.11``
   * ``DJANGO_CELERY_VER`` - defaults to ``3.1.17``
+  * ``CELERY_VER`` - defaults to ``3.1.24``
 
 ### Baked
 
