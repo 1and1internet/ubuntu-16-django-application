@@ -23,5 +23,9 @@ else
     # Execute our scheduler
     # NB. This follows the slightly older way of doing this and requires the django-celery package
     source application-python-environment
-    exec python /var/www/manage.py celeryd -l info
+    if [ "$CELERY_CONCURRENCY" == "AUTO" ]; then
+        exec python /var/www/manage.py celeryd -l $DJANGO_LOG_LEVEL
+    else
+        exec python /var/www/manage.py celeryd -l $DJANGO_LOG_LEVEL -c $CELERY_CONCURRENCY
+    fi
 fi

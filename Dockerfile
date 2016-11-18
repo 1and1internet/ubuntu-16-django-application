@@ -11,7 +11,9 @@ ENV \
 	PASSENGER_APP_ENV=production \
 	CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672// \
 	CELERY_BROKER_API=http://guest:guest@rabbitmq:15672/api/ \
-	SECRET_KEY=insecure
+	SECRET_KEY=insecure \
+	DJANGO_LOG_LEVEL=INFO \
+	CELERY_CONCURRENCY=AUTO
 COPY files /
 RUN application-bootstrap
 WORKDIR /var/www/
