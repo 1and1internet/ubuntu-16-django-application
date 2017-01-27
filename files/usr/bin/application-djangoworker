@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+echo "Django Application Worker"
+#
+# To run just the application worker in its own container use
+# $ docker run ubuntu-16-django-application application-djangoworker
+#
+
+# Stop on error
+set -e
+
+cd /var/www
+if [ ! -e "manage.py" ]; then 
+    echo "ERROR: Django application not present in /var/www"
+    exit 1
+fi
+
+if [ -z "$1" ]; then
+    # No command line arguments ... assume being called as docker run argument
+    echo "Enabling django worker!"
+    application-component-enable djangoworker
+    exec /init/supervisord
+else
+    echo "Executing django worker thread"
+    # Execute our scheduler
+    source application-python-environment
+    exec python /var/www/manage.py process_tasks -l $DJANGO_LOG_LEVEL
+fi
