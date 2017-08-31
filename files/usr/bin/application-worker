@@ -10,7 +10,7 @@ echo "Application Worker"
 set -e
 
 cd /var/www
-if [ ! -e "manage.py" ]; then 
+if [ ! -e "manage.py" ]; then
     echo "ERROR: Django application not present in /var/www"
     exit 1
 fi
@@ -23,9 +23,20 @@ else
     # Execute our scheduler
     # NB. This follows the slightly older way of doing this and requires the django-celery package
     source application-python-environment
-    if [ "$CELERY_CONCURRENCY" == "AUTO" ]; then
-        exec python /var/www/manage.py celeryd -l $DJANGO_LOG_LEVEL
-    else
-        exec python /var/www/manage.py celeryd -l $DJANGO_LOG_LEVEL -c $CELERY_CONCURRENCY
+
+    CELERY_ARGS=""
+
+    if [ ! -z "${DJANGO_LOG_LEVEL}" ]; then
+        CELERY_ARGS="${CELERY_ARGS} -l ${DJANGO_LOG_LEVEL}"
     fi
+
+    if [ ! -z "${CELERY_CONCURRENCY}" ] && [ "${CELERY_CONCURRENCY}" != "AUTO" ]; then
+        CELERY_ARGS="${CELERY_ARGS} -c ${CELERY_CONCURRENCY}"
+    fi
+
+    if [ ! -z "${CELERY_QUEUE}" ]; then
+        CELERY_ARGS="${CELERY_ARGS} -Q ${CELERY_QUEUE} -n '%h.${CELERY_QUEUE}'"
+    fi
+
+    exec python /var/www/manage.py celeryd ${CELERY_ARGS} "${@:2}"
 fi
